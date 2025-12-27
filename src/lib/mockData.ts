@@ -1,4 +1,4 @@
-import type { Equipment, MaintenanceRequest, User, Team, EquipmentCategory, Site, Area, WorkCenter, AutomationRule } from '../types';
+import type { Equipment, MaintenanceRequest, User, Team, EquipmentCategory, Site, Area, WorkCenter, AutomationRule, InventoryItem } from '../types';
 
 export const mockTeams: Team[] = [
     { id: 't1', name: 'Internal Maintenance', memberIds: ['u2'], description: 'Heavy machinery and hydraulics' }, // Updated Name
@@ -172,6 +172,14 @@ export const mockEquipment: Equipment[] = [
         model: 'G-500',
         manufacturer: 'PowerGen',
     },
+];
+
+export const MOCK_INVENTORY: InventoryItem[] = [
+    { id: 'inv1', name: 'Hydraulic Seal Kit (Type A)', sku: 'SEAL-HYD-001', stock: 4, minStock: 5, cost: 45.0, unit: 'pc', category: 'Spares' },
+    { id: 'inv2', name: 'Bearing SKF-6204', sku: 'BRG-SKF-6204', stock: 12, minStock: 10, cost: 12.5, unit: 'pc', category: 'Spares' },
+    { id: 'inv3', name: 'Industrial Coolant (5L)', sku: 'CHEM-COOL-5L', stock: 2, minStock: 3, cost: 30.0, unit: 'can', category: 'Consumables' },
+    { id: 'inv4', name: 'Sensormatic Pro 500', sku: 'SENS-PRO-500', stock: 1, minStock: 2, cost: 150.0, unit: 'pc', category: 'Electronics' },
+    { id: 'inv5', name: 'Fuse 10A Slow Blow', sku: 'ELEC-FUSE-10A', stock: 50, minStock: 20, cost: 0.5, unit: 'pc', category: 'Electronics' },
 ];
 
 export const mockRequests: MaintenanceRequest[] = [

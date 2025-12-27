@@ -43,7 +43,7 @@ export const EquipmentPage = () => {
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/master/equipment/new')}
+                    onClick={() => navigate('/equipment/new')}
                     className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 text-sm font-medium hover:bg-primary/90 transition-all font-display tracking-wide"
                 >
                     <Plus className="w-4 h-4" />

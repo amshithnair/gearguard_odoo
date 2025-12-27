@@ -101,6 +101,17 @@ export interface Equipment {
     oeeQuality?: number; // 0-100
 }
 
+export interface InventoryItem {
+    id: string;
+    name: string;
+    sku: string;
+    stock: number;
+    minStock: number;
+    cost: number;
+    unit: string;
+    category: string;
+}
+
 export interface MaintenanceRequest {
     id: string;
     equipmentId: string;
@@ -118,6 +129,7 @@ export interface MaintenanceRequest {
     type?: 'corrective' | 'preventive';
     duration?: number; // Hours spent
     teamId?: string; // Assigned Team
+    parts?: { itemId: string; quantity: number }[]; // Smart Inventory Link
 }
 
 // Helper specific to Kanban that might be useful

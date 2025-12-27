@@ -1,37 +1,37 @@
 import { useParams, Link } from 'react-router-dom';
-import { useLiveQuery } from '@electric-sql/pglite-react';
-import { db } from '../../db/client';
+import { useStore } from '../../stores/useStore';
+import { MOCK_INVENTORY, mockWorkCenters } from '../../lib/mockData';
 import { Plus, Search, Users, Factory, Package, Wrench } from 'lucide-react';
+import { clsx } from 'clsx';
 
-export const MasterListView = () => {
-    const { type } = useParams<{ type: string }>();
+export const MasterListView = ({ forceType }: { forceType?: string }) => {
+    const params = useParams<{ type: string }>();
+    const type = forceType || params.type;
+    const { teams, equipment } = useStore();
 
-    // Dynamic Title & Query based on Type
+    // Dynamic Data Source
     let title = 'Master Data';
-    let query = '';
     let columns: string[] = [];
+    let rows: any[] = [];
 
     // Determine configuration
     if (type === 'teams') {
         title = 'Teams & Technicians';
-        query = 'SELECT id, name, description, slug FROM teams ORDER BY name ASC';
-        columns = ['Team Name', 'Description', 'Channel Slug'];
+        rows = teams;
+        columns = ['Team Name', 'Description', 'Members'];
     } else if (type === 'equipment') {
-        title = 'Equipment';
-        query = 'SELECT id, name, serial_number, status, location FROM equipment ORDER BY name ASC';
+        title = 'Equipment Registry';
+        rows = equipment;
         columns = ['Name', 'Serial #', 'Status', 'Location'];
     } else if (type === 'work-centers') {
         title = 'Work Centers';
-        query = 'SELECT id, name, code, cost_per_hour, capacity_efficiency FROM work_centers ORDER BY name ASC';
-        columns = ['Name', 'Code', 'Cost/Hr', 'Efficiency'];
+        rows = mockWorkCenters;
+        columns = ['Name', 'Linked Area'];
     } else if (type === 'inventory') {
-        title = 'Inventory';
-        // Mock query until spare_parts table created
-        query = '';
-        columns = ['Part Name', 'Stock', 'Min Level'];
+        title = 'Inventory (Spare Parts)';
+        rows = MOCK_INVENTORY;
+        columns = ['Part Name', 'Stock', 'Min Level', 'Cost'];
     }
-
-    const { rows } = useLiveQuery<any>(query || 'SELECT 1');
 
     return (
         <div className="h-full flex flex-col bg-gray-50/50">
@@ -79,41 +79,65 @@ export const MasterListView = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                            {rows?.map((row: any) => (
+                            {rows.map((row: any) => (
                                 <tr key={row.id} className="hover:bg-blue-50/50 transition-colors cursor-pointer group">
-                                    {/* Generic Rendering based on type */}
+                                    {/* Teams */}
                                     {type === 'teams' && (
                                         <>
                                             <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
                                             <td className="px-6 py-4 text-slate-600">{row.description}</td>
                                             <td className="px-6 py-4">
-                                                <code className="px-2 py-1 bg-slate-100 rounded text-xs text-slate-600 font-mono">#{row.slug}</code>
+                                                <div className="flex -space-x-2">
+                                                    {(row.memberIds || []).map((mid: string) => (
+                                                        <div key={mid} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-xs font-bold text-slate-600" title={mid}>
+                                                            {mid.substring(0, 1).toUpperCase()}
+                                                        </div>
+                                                    ))}
+                                                    {(row.memberIds || []).length === 0 && <span className="text-slate-400 text-sm italic">No members</span>}
+                                                </div>
                                             </td>
                                         </>
                                     )}
+                                    {/* Equipment */}
                                     {type === 'equipment' && (
                                         <>
                                             <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
-                                            <td className="px-6 py-4 font-mono text-xs text-slate-500">{row.serial_number}</td>
+                                            <td className="px-6 py-4 font-mono text-xs text-slate-500">{row.serialNumber}</td>
                                             <td className="px-6 py-4">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 capitalize">
+                                                <span className={clsx(
+                                                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize",
+                                                    row.status === 'active' ? "bg-green-100 text-green-800" :
+                                                        row.status === 'maintenance' ? "bg-yellow-100 text-yellow-800" : "bg-slate-100 text-slate-800"
+                                                )}>
                                                     {row.status}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 text-slate-600">{row.location}</td>
                                         </>
                                     )}
+                                    {/* Work Centers */}
                                     {type === 'work-centers' && (
                                         <>
                                             <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
-                                            <td className="px-6 py-4 font-mono text-xs text-slate-500">{row.code}</td>
-                                            <td className="px-6 py-4 text-slate-600">${Number(row.cost_per_hour).toFixed(2)}</td>
-                                            <td className="px-6 py-4 text-slate-600">{row.capacity_efficiency}%</td>
+                                            <td className="px-6 py-4 text-slate-600 font-mono text-xs">{row.areaId}</td>
+                                        </>
+                                    )}
+                                    {/* Inventory */}
+                                    {type === 'inventory' && (
+                                        <>
+                                            <td className="px-6 py-4 font-medium text-slate-900">{row.name}</td>
+                                            <td className="px-6 py-4">
+                                                <span className={clsx("font-bold", row.stock <= row.minStock ? "text-red-600" : "text-slate-700")}>
+                                                    {row.stock} {row.unit}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-slate-600">{row.minStock}</td>
+                                            <td className="px-6 py-4 text-slate-600">${row.cost}</td>
                                         </>
                                     )}
                                 </tr>
                             ))}
-                            {(!rows || rows.length === 0) && (
+                            {rows.length === 0 && (
                                 <tr>
                                     <td colSpan={columns.length} className="px-6 py-12 text-center text-slate-400">
                                         No records found.
@@ -127,3 +151,4 @@ export const MasterListView = () => {
         </div>
     );
 };
+

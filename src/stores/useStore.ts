@@ -26,6 +26,10 @@ interface AppState {
     updateEquipment: (id: string, updates: Partial<Equipment>) => void;
     deleteEquipment: (id: string) => void;
 
+    addTeam: (team: Team) => void;
+    deleteTeam: (id: string) => void;
+    updateTeam: (id: string, updates: Partial<Team>) => void;
+
     addCategory: (cat: EquipmentCategory) => void;
     updateCategory: (id: string, updates: Partial<EquipmentCategory>) => void;
     deleteCategory: (id: string) => void;
@@ -71,10 +75,18 @@ export const useStore = create<AppState>()(
                 set((state) => ({
                     equipment: state.equipment.map((e) => (e.id === id ? { ...e, ...updates } : e)),
                 })),
+
+
             deleteEquipment: (id) =>
                 set((state) => ({
                     equipment: state.equipment.filter((e) => e.id !== id),
                 })),
+
+            addTeam: (team) => set((state) => ({ teams: [...state.teams, team] })),
+            deleteTeam: (id) => set((state) => ({ teams: state.teams.filter((t) => t.id !== id) })),
+            updateTeam: (id, updates) => set((state) => ({
+                teams: state.teams.map(t => t.id === id ? { ...t, ...updates } : t)
+            })),
 
             addCategory: (cat) => set((state) => ({ categories: [...state.categories, cat] })),
             updateCategory: (id, updates) =>
