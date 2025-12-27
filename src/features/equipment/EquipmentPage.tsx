@@ -1,19 +1,23 @@
-import { useStore } from '../../stores/useStore';
+import { useDbQuery } from '../../hooks/use-db-query';
 import { Search, Filter, Plus, Monitor } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useState } from 'react';
-import type { Equipment } from '../../types';
-import { EquipmentDetailModal } from './components/EquipmentDetailModal';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 export const EquipmentPage = () => {
-    const { equipment } = useStore();
-    const [search, setSearch] = useState('');
-    const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
+    // Fetch directly from PGlite via hook
+    const { data: equipment } = useDbQuery(`
+        SELECT * FROM equipment 
+        ORDER BY name ASC
+    `);
 
-    const filteredEquipment = equipment.filter(e =>
+    const [search, setSearch] = useState('');
+    const navigate = useNavigate();
+
+    const filteredEquipment = (equipment || []).filter((e: any) =>
         e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.serialNumber.toLowerCase().includes(search.toLowerCase())
+        (e.serial_number && e.serial_number.toLowerCase().includes(search.toLowerCase()))
     );
 
     const getStatusColor = (status: string) => {
@@ -39,6 +43,7 @@ export const EquipmentPage = () => {
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/master/equipment/new')}
                     className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-xl shadow-lg shadow-primary/20 text-sm font-medium hover:bg-primary/90 transition-all font-display tracking-wide"
                 >
                     <Plus className="w-4 h-4" />
@@ -47,21 +52,46 @@ export const EquipmentPage = () => {
             </div>
 
             <div className="bg-white/40 backdrop-blur-xl rounded-3xl border border-white/40 shadow-card overflow-hidden">
-                <div className="p-6 border-b border-white/20 flex gap-4">
-                    <div className="relative flex-1 max-w-sm group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <input
-                            type="text"
-                            placeholder="Search equipment..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
-                        />
+                <div className="p-6 border-b border-white/20 flex flex-col gap-4">
+                    {/* ISA-95 Hierarchy Filter */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                        <button
+                            onClick={() => setSearch('')} // Reset search for now, ideally strictly filter by activeSiteId
+                            className={clsx("px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all", !search ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-500 border-slate-200")}
+                        >
+                            All Sites
+                        </button>
+                        {/* Hardcoded for visual demo flow */}
+                        <button
+                            onClick={() => setSearch('Textile')} // Simple hack to filter by text for now or implement proper filtering
+                            className={clsx("px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all", search === 'Textile' ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-slate-500 border-slate-200")}
+                        >
+                            Surat Finefab (Textile)
+                        </button>
+                        <button
+                            onClick={() => setSearch('Auto')}
+                            className={clsx("px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border transition-all", search === 'Auto' ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-500 border-slate-200")}
+                        >
+                            Gujarat AutoWorks (Automotive)
+                        </button>
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/50 bg-white/50 hover:bg-white text-sm font-medium transition-colors shadow-sm text-muted-foreground hover:text-foreground">
-                        <Filter className="w-4 h-4" />
-                        Filter
-                    </button>
+
+                    <div className="flex gap-4">
+                        <div className="relative flex-1 max-w-sm group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Search equipment..."
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/50 bg-white/50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/50 transition-all"
+                            />
+                        </div>
+                        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/50 bg-white/50 hover:bg-white text-sm font-medium transition-colors shadow-sm text-muted-foreground hover:text-foreground">
+                            <Filter className="w-4 h-4" />
+                            Filter
+                        </button>
+                    </div>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -82,8 +112,9 @@ export const EquipmentPage = () => {
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.05 }}
+                                    onClick={() => navigate(`/master/equipment/${item.id}`)}
                                     key={item.id}
-                                    className="hover:bg-white/40 transition-colors group"
+                                    className="hover:bg-white/40 transition-colors group cursor-pointer"
                                 >
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-4">
@@ -108,8 +139,11 @@ export const EquipmentPage = () => {
                                     </td>
                                     <td className="px-6 py-4">
                                         <button
-                                            onClick={() => setSelectedEquipment(item)}
                                             className="text-primary-600 hover:text-primary-800 font-medium hover:underline decoration-2 underline-offset-4"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                navigate(`/master/equipment/${item.id}`);
+                                            }}
                                         >
                                             View Details
                                         </button>
@@ -120,11 +154,6 @@ export const EquipmentPage = () => {
                     </table>
                 </div>
             </div>
-
-            <EquipmentDetailModal
-                equipment={selectedEquipment}
-                onClose={() => setSelectedEquipment(null)}
-            />
         </motion.div>
     );
 };

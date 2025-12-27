@@ -11,20 +11,26 @@ export const db = new PGlite('idb://gearguard-db', {
 export async function initDB() {
     console.log('Initializing Database...');
     try {
-        // 1. Run Schema
+        // ALWAYS Run Schema to ensure latest structure (It includes DROPs for dev mode)
         await db.exec(schema);
 
-        // 2. Check if seeded
+        // Check if seeded (users count)
         const result = await db.query('SELECT count(*) from users');
         const userCount = result.rows[0]?.count;
 
-        // 3. Seed if empty
         if (Number(userCount) === 0) {
-            console.log('Database empty, seeding...');
+            console.log('Database empty/reset, seeding...');
             await seedDatabase(db);
             console.log('Database seeded!');
         } else {
-            console.log('Database already initialized.');
+            // For V2 dev, since we want to force the new seed data structure, 
+            // we might want to drop if schema ran but didn't clear data? 
+            // Actually, the Schema file has DROP TABLE commands at the top.
+            // So running `db.exec(schema)` WIPES the data.
+            // Thus, userCount will be 0 after line 13.
+            // So this logic naturally falls through to re-seed.
+            console.log('Schema applied (Data wiped for V2 dev). Re-seeding...');
+            await seedDatabase(db);
         }
     } catch (err) {
         console.error('Failed to initialize DB:', err);

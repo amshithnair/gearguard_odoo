@@ -7,7 +7,12 @@ import {
     Settings,
     LogOut,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    BarChart3, // Reporting
+    Users,     // Teams
+    AlertTriangle, // Alerts
+    Factory,   // Master Data
+    Package
 } from 'lucide-react';
 import { useStore } from '../../stores/useStore';
 import { clsx } from 'clsx';
@@ -18,12 +23,20 @@ export const Sidebar = () => {
     const { currentUser, logout } = useStore();
     const [collapsed, setCollapsed] = useState(false);
 
-    // Modern navigation items
     const navItems = [
         { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
         { label: 'Kanban Board', icon: ClipboardList, path: '/kanban' },
         { label: 'Equipment', icon: Wrench, path: '/equipment' },
         { label: 'Schedule', icon: Calendar, path: '/calendar' },
+        { label: 'Reporting', icon: BarChart3, path: '/reporting' },
+        { label: 'Alerts', icon: AlertTriangle, path: '/alerts' },
+
+        // Master Data Group
+        { label: 'Inventory', icon: Package, path: '/master/inventory' },
+        { label: 'Teams', icon: Users, path: '/master/teams' },
+        { label: 'Work Centers', icon: Factory, path: '/master/work-centers' }, // Using Work Center link
+
+        { label: 'Simulation (Pulse)', icon: ClipboardList, path: '/simulation' },
         { label: 'Settings', icon: Settings, path: '/settings' },
     ];
 

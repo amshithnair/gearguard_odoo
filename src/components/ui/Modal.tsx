@@ -45,15 +45,15 @@ export const Modal = ({ isOpen, onClose, children, title }: ModalProps) => {
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-white/20 dark:border-white/10 w-full max-w-2xl rounded-3xl shadow-2xl relative overflow-hidden z-10"
+                        className="bg-white backdrop-blur-xl border border-gray-200 w-full max-w-2xl rounded-3xl shadow-2xl relative overflow-hidden z-10"
                     >
-                        <div className="flex items-center justify-between p-6 border-b border-white/20 dark:border-white/10">
-                            <h2 className="text-xl font-bold font-display tracking-tight text-foreground">{title}</h2>
+                        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                            <h2 className="text-xl font-bold font-display tracking-tight text-slate-900">{title}</h2>
                             <button
                                 onClick={onClose}
-                                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                className="p-2 rounded-full hover:bg-slate-100 transition-colors"
                             >
-                                <X className="w-5 h-5 text-muted-foreground" />
+                                <X className="w-5 h-5 text-slate-500" />
                             </button>
                         </div>
                         <div className="p-6 max-h-[70vh] overflow-y-auto custom-scrollbar">

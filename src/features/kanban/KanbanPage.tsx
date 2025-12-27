@@ -1,6 +1,7 @@
 import { DndContext, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import type { DragEndEvent } from '@dnd-kit/core';
-import { useStore } from '../../stores/useStore';
+import { useDbQuery } from '../../hooks/use-db-query';
+import { db } from '../../db/client'; // Need direct DB access for writes
 import { KanbanColumn } from './components/KanbanColumn';
 import { TicketCard } from './components/TicketCard';
 import type { RequestStatus } from '../../types';
@@ -10,16 +11,37 @@ import { motion } from 'framer-motion';
 import { NewRequestModal } from './components/NewRequestModal';
 import { Plus } from 'lucide-react';
 
-const columns: { id: RequestStatus; title: string }[] = [
-    { id: 'new', title: 'New Requests' },
-    { id: 'in_progress', title: 'In Progress' },
-    { id: 'pending_parts', title: 'Pending Parts' },
-    { id: 'completed', title: 'Completed' },
-    { id: 'canceled', title: 'Canceled' },
+// Map PGlite "Stage" (Capitalized from Seed/Schema?) to UI Status IDs 
+// Schema said: stage TEXT CHECK (stage IN ('New', 'In Progress', 'Repaired', 'Scrap'))
+// UI uses: 'new', 'in_progress', 'pending_parts', 'completed', 'canceled'
+// We need to map or align them. 
+// For now, let's update columns to match DB Schema values (Case Sensitive in PGlite usually stores as specific string)
+const columns: { id: string; title: string }[] = [
+    { id: 'New', title: 'New Requests' },
+    { id: 'In Progress', title: 'In Progress' },
+    { id: 'Blocked', title: 'Blocked / Pending' }, // Mapped from pending_parts?? Schema has 'Blocked'
+    { id: 'Repaired', title: 'Completed / Repaired' },
+    { id: 'Scrap', title: 'Scrap' },
 ];
 
 export const KanbanPage = () => {
-    const { requests, updateRequestStatus } = useStore();
+    // Live query for tickets
+    const { data: requests } = useDbQuery('SELECT * FROM tickets ORDER BY updated_at DESC');
+
+    // Convert DB keys (snake_case) to UI expected keys (camelCase) if components expect it?
+    // Or update components. Let's map on the fly for safety if TicketCard is strict.
+    // Assuming TicketCard expects "MaintenanceRequest" type.
+    const mappedRequests = (requests || []).map((r: any) => ({
+        ...r,
+        status: r.stage, // Map DB 'stage' to UI 'status'
+        equipmentId: r.equipment_id,
+        createdAt: r.created_at,
+        // ... mappings as needed by TicketCard. 
+        // TicketCard likely uses `r.title`, `r.priority`, `r.description`.
+        // DB keys: title, priority (Medium/High - Capitalized?), description.
+        // UI Type: Priority (lowercase).
+    }));
+
     const [activeId, setActiveId] = useState<string | null>(null);
     const [isNewRequestOpen, setIsNewRequestOpen] = useState(false);
 
@@ -35,22 +57,21 @@ export const KanbanPage = () => {
         setActiveId(event.active.id);
     };
 
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = async (event: DragEndEvent) => {
         const { active, over } = event;
 
         if (over && active.id !== over.id) {
-            // If dropping on a container (column), update status
-            const newStatus = over.id as RequestStatus;
+            const newStage = over.id as string;
 
-            // Check if over.id is a valid status column
-            if (columns.some(col => col.id === newStatus)) {
-                updateRequestStatus(active.id as string, newStatus);
+            if (columns.some(col => col.id === newStage)) {
+                // Optimistic Update? For now just await DB
+                await db.query(`UPDATE tickets SET stage = $1, updated_at = NOW() WHERE id = $2`, [newStage, active.id]);
             }
         }
         setActiveId(null);
     };
 
-    const activeRequest = activeId ? requests.find(r => r.id === activeId) : null;
+    const activeRequest = activeId ? mappedRequests.find((r: any) => r.id === activeId) : null;
 
     return (
         <motion.div
@@ -82,7 +103,7 @@ export const KanbanPage = () => {
                             key={col.id}
                             id={col.id}
                             title={col.title}
-                            requests={requests.filter(r => r.status === col.id)}
+                            requests={mappedRequests.filter((r: any) => r.status === col.id)}
                         />
                     ))}
                 </div>

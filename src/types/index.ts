@@ -20,11 +20,58 @@ export interface Team {
     memberIds: string[]; // IDs of Users in this team
 }
 
+export interface Site {
+    id: string;
+    name: string;
+    type: string; // e.g. "Textile Plant", "Assembly Plant"
+    location: string;
+}
+
+export interface Area {
+    id: string;
+    siteId: string;
+    name: string; // e.g. "Production Hall", "Weaving Shed"
+}
+
+export interface WorkCenter {
+    id: string;
+    areaId: string;
+    name: string; // e.g. "Line 1", "CNC Station"
+}
+
+export interface TelemetryLog {
+    id: string;
+    equipmentId: string;
+    parameter: string; // e.g. "Temperature", "Vibration"
+    value: number;
+    timestamp: string;
+    isAnomaly: boolean;
+}
+
+export interface AutomationRule {
+    id: string;
+    equipmentId: string; // or 'all' or by category
+    parameter: string; // "Temperature"
+    condition: '>' | '<' | '==' | '>=' | '<=';
+    threshold: number;
+    triggerPriority: Priority;
+    triggerTitle: string; // "Overheating Detected"
+    triggerDescription: string; // "Telemetry > 80C. Auto-generated."
+}
+
+export interface EquipmentCategory {
+    id: string;
+    name: string;
+    responsibleId?: string; // User ID
+    company?: string;
+}
+
 export interface Equipment {
     id: string;
     name: string;
     serialNumber: string;
-    category: string;
+    category: string; // This might be the Category Name or ID. For simplicity let's keep it as string or map to ID
+    categoryId?: string; // Linking to EquipmentCategory
     location: string;
     status: Status;
     healthScore: number;
@@ -36,10 +83,22 @@ export interface Equipment {
     manufacturer: string;
     // New Fields for Odoo-like tracking
     department?: string; // e.g. "Production"
-    employeeId?: string; // Owner/Responsible
-    teamId?: string;     // Default Maintenance Team
+    employeeId?: string; // Owner/Responsible - "Used By" / Employee
+    technicianId?: string; // Technician
+    teamId?: string;     // Maintenance Team
     purchaseDate?: string;
     warrantyExpiration?: string;
+    scrapDate?: string | null;
+    assignedDate?: string | null; // Assigned Date
+    usedInLocation?: string; // Used in location
+    workCenter?: string; // Work Center Name
+    workCenterId?: string; // ISA-95 Link
+    partnerId?: string; // Used By (Partner/Employee) - mapping to employeeId effectively
+
+    // OEE Data
+    oeeAvailability?: number; // 0-100
+    oeePerformance?: number; // 0-100
+    oeeQuality?: number; // 0-100
 }
 
 export interface MaintenanceRequest {
