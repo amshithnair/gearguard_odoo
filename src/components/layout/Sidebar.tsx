@@ -33,7 +33,7 @@ export const Sidebar = () => {
 
         // Master Data Group
         { label: 'Inventory', icon: Package, path: '/master/inventory' },
-        { label: 'Teams', icon: Users, path: '/master/teams' },
+        { label: 'Teams', icon: Users, path: '/teams' },
         { label: 'Work Centers', icon: Factory, path: '/master/work-centers' }, // Using Work Center link
 
         { label: 'Simulation (Pulse)', icon: ClipboardList, path: '/simulation' },

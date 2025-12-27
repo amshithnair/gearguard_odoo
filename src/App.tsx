@@ -13,6 +13,7 @@ import { EquipmentFormPage } from './features/equipment/EquipmentFormPage';
 import { TelemetrySimulator } from './features/simulation/TelemetrySimulator';
 import { ShopFloorMap } from './features/map/ShopFloorMap';
 import { MasterListView } from './features/master-data/MasterListView';
+import { TeamsPage } from './features/teams/TeamsPage';
 import { ReportingPage } from './features/analytics/ReportingPage';
 
 const AlertsPlaceholder = () => <div className="p-8 text-2xl font-bold">Alerts & Notifications</div>;
@@ -36,9 +37,9 @@ function App() {
           <Route path="scomp" element={<div className="p-8 font-mono">SCOMP Terminal Placeholder</div>} />
 
           {/* Master Data */}
-          <Route path="master/teams" element={<MasterListView />} />
-          <Route path="master/inventory" element={<MasterListView />} />
-          <Route path="master/work-centers" element={<MasterListView />} />
+          <Route path="teams" element={<TeamsPage />} />
+          <Route path="master/inventory" element={<MasterListView forceType="inventory" />} />
+          <Route path="master/work-centers" element={<MasterListView forceType="work-centers" />} />
           <Route path="map" element={<ShopFloorMap />} />
 
           {/* New Feature: Telemetry Simulation */}

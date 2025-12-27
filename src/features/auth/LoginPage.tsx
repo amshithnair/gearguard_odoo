@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { useStore } from '../../stores/useStore';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Wrench, Loader2 } from 'lucide-react';
 
 export const LoginPage = () => {
-    const { login } = useStore();
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const { login } = useStore();
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,6 +18,7 @@ export const LoginPage = () => {
         setLoading(true);
 
         try {
+            // Simulate network delay
             await new Promise(resolve => setTimeout(resolve, 800));
             login(email, password);
             navigate('/');
@@ -28,71 +30,69 @@ export const LoginPage = () => {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-zinc-900/60 backdrop-blur-xl border border-white/10 rounded-3xl p-8 shadow-glass relative overflow-hidden"
-        >
-            {/* Decorative glows */}
-            <div className="absolute top-0 right-0 w-48 h-48 bg-primary/20 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
-            <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/20 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
-
-            <div className="relative z-10">
-                <div className="text-center mb-8">
-                    <h2 className="text-3xl font-bold text-white font-display tracking-tight">Welcome Back</h2>
-                    <p className="text-zinc-400 text-sm mt-2">Enter your credentials to access the portal.</p>
+        <div className="w-full max-w-md space-y-8">
+            <div className="text-center">
+                <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
+                    <Wrench className="w-8 h-8 text-white" />
                 </div>
+                <h2 className="text-3xl font-bold font-display tracking-tight text-slate-900">Welcome back</h2>
+                <p className="mt-2 text-slate-500">Sign in to your GearGuard account</p>
+            </div>
 
-                {error && (
-                    <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-300 text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
+            <div className="bg-white p-8 rounded-2xl shadow-xl shadow-slate-200/50 ring-1 ring-slate-100">
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-zinc-300 ml-1 uppercase tracking-wider">Email</label>
+                    {error && (
+                        <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email address</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             placeholder="admin@gearguard.com"
                         />
                     </div>
 
-                    <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-zinc-300 ml-1 uppercase tracking-wider">Password</label>
+                    <div>
+                        <label className="block text-sm font-semibold text-slate-700 mb-1.5">Password</label>
                         <input
                             type="password"
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner"
+                            className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all"
                             placeholder="••••••••"
                         />
                     </div>
 
-                    <div className="pt-6 flex flex-col items-center gap-6">
-                        <motion.button
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3.5 rounded-xl bg-primary hover:bg-primary-600 text-white font-bold shadow-lg shadow-primary/25 transition-all disabled:opacity-50 disabled:pointer-events-none"
-                        >
-                            {loading ? 'Signing in...' : 'Sign In'}
-                        </motion.button>
-
-                        <div className="text-sm text-zinc-500 flex gap-4">
-                            <button type="button" className="hover:text-zinc-300 transition-colors">Forgot Password?</button>
-                            <span className="text-zinc-700">|</span>
-                            <Link to="/auth/signup" className="text-primary-400 hover:text-primary-300 font-medium transition-colors">Create Account</Link>
-                        </div>
-                    </div>
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold shadow-lg shadow-blue-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {loading ? 'Signing in...' : 'Sign in'}
+                    </button>
                 </form>
+
+                <div className="mt-6 text-center text-sm text-slate-500">
+                    Don't have an account?{' '}
+                    <Link to="/auth/signup" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                        Sign up
+                    </Link>
+                </div>
             </div>
-        </motion.div>
+
+            <div className="text-center text-xs text-slate-400">
+                <p>Demo Credentials:</p>
+                <p>admin@gearguard.com / Password123!</p>
+            </div>
+        </div>
     );
 };

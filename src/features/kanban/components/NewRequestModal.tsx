@@ -1,10 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '../../../stores/useStore';
 import { Modal } from '../../../components/ui/Modal';
-import type { MaintenanceRequest, Priority } from '../../../types';
-import { Users, Wrench, Calendar as CalendarIcon } from 'lucide-react';
+import type { MaintenanceRequest, Priority, InventoryItem } from '../../../types';
+import { Users, Wrench, Calendar as CalendarIcon, Package, AlertTriangle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
+import { MOCK_INVENTORY } from '../../../lib/mockData';
+
+// Mock "Smart" Knowledge Base with Recommended Parts
+const COMMON_PROBLEMS = [
+    { label: 'Hydraulic Leak', teamKeyword: 'Internal Maintenance', priority: 'high' as const, recommendedParts: ['inv1', 'inv3'] },
+    { label: 'Circuit Board Failure', teamKeyword: 'Electronics', priority: 'medium' as const, recommendedParts: ['inv5'] },
+    { label: 'Sensor Drift', teamKeyword: 'Electronics', priority: 'low' as const, recommendedParts: ['inv4'] },
+    { label: 'Motor Overheating', teamKeyword: 'Mechanical Titans', priority: 'critical' as const, recommendedParts: ['inv2'] },
+    { label: 'Software Glitch', teamKeyword: 'IT Support', priority: 'medium' as const, recommendedParts: [] },
+    { label: 'Unusual Noise / Vibration', teamKeyword: 'Internal Maintenance', priority: 'high' as const, recommendedParts: ['inv2', 'inv1'] },
+];
 
 interface NewRequestModalProps {
     isOpen: boolean;
@@ -21,6 +32,30 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
     const [type, setType] = useState<'corrective' | 'preventive'>('corrective');
     const [priority, setPriority] = useState<Priority>('medium');
     const [scheduledDate, setScheduledDate] = useState('');
+    const [recommendedParts, setRecommendedParts] = useState<InventoryItem[]>([]);
+
+    // Smart Assist Logic
+    const handleProblemSelect = (problemLabel: string) => {
+        setTitle(problemLabel);
+
+        // Find best team match
+        const problem = COMMON_PROBLEMS.find(p => p.label === problemLabel);
+        if (problem) {
+            setPriority(problem.priority);
+
+            // Auto Select Team
+            const targetTeam = teams.find(t => t.name.includes(problem.teamKeyword) || (t.description && t.description.includes(problem.teamKeyword)));
+            if (targetTeam) {
+                setTeamId(targetTeam.id);
+            }
+
+            // Auto Suggest Parts
+            const parts = MOCK_INVENTORY.filter(i => problem.recommendedParts.includes(i.id));
+            setRecommendedParts(parts);
+        } else {
+            setRecommendedParts([]);
+        }
+    };
 
     // Auto-fill Logic: Watch for Equipment Change
     useEffect(() => {
@@ -48,7 +83,8 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
             description: 'Created via Smart Form',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            scheduledDate: type === 'preventive' ? scheduledDate : undefined
+            scheduledDate: type === 'preventive' ? scheduledDate : undefined,
+            // In a real app, we would save recommendedParts here too
         };
 
         addRequest(newRequest);
@@ -58,6 +94,7 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
         setEquipmentId('');
         setTeamId('');
         setType('corrective');
+        setRecommendedParts([]);
     };
 
     return (
@@ -90,13 +127,25 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">Subject</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Subject / Common Issue</label>
+                        <div className="flex gap-2 mb-2 bg-blue-50/50 p-2 rounded-lg overflow-x-auto">
+                            {COMMON_PROBLEMS.map(p => (
+                                <button
+                                    key={p.label}
+                                    type="button"
+                                    onClick={() => handleProblemSelect(p.label)}
+                                    className="px-3 py-1 bg-white border border-blue-100 rounded-full text-xs font-medium text-blue-700 hover:bg-blue-100 hover:border-blue-200 transition-colors whitespace-nowrap"
+                                >
+                                    + {p.label}
+                                </button>
+                            ))}
+                        </div>
                         <input
                             required
                             type="text"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
-                            placeholder="What's wrong?"
+                            placeholder="Describe the failure..."
                             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-100 outline-none"
                         />
                     </div>
@@ -153,6 +202,40 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
                         </motion.div>
                     )}
 
+                    {/* Smart Inventory Section */}
+                    {recommendedParts.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-purple-50 p-4 rounded-xl border border-purple-100"
+                        >
+                            <h4 className="flex items-center gap-2 text-sm font-bold text-purple-800 mb-3">
+                                <Package className="w-4 h-4" />
+                                Recommended Parts (Smart Inventory)
+                            </h4>
+                            <div className="space-y-2">
+                                {recommendedParts.map(part => {
+                                    const isLowStock = part.stock <= part.minStock;
+                                    return (
+                                        <div key={part.id} className="flex justify-between items-center bg-white p-2 rounded-lg border border-purple-100 shadow-sm">
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900">{part.name}</p>
+                                                <p className="text-xs text-slate-500 font-mono">SKU: {part.sku}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={clsx("text-xs font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1", isLowStock ? "bg-red-100 text-red-600" : "bg-green-100 text-green-700")}>
+                                                    {isLowStock && <AlertTriangle className="w-3 h-3" />}
+                                                    Stock: {part.stock} {part.unit}
+                                                </div>
+                                                <div className="text-xs text-slate-400 mt-1">${part.cost} / unit</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    )}
+
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
                         <div className="flex gap-2">
@@ -185,3 +268,4 @@ export const NewRequestModal = ({ isOpen, onClose }: NewRequestModalProps) => {
         </Modal>
     );
 };
+
