@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useStore } from '../../stores/useStore';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { authAPI } from '../../services/api';
 
 export const LoginPage = () => {
-    const { login } = useStore();
     const navigate = useNavigate();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
@@ -17,11 +16,10 @@ export const LoginPage = () => {
         setLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            login(email, password);
+            await authAPI.login(username, password);
             navigate('/');
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || 'Login failed. Please check your credentials.');
         } finally {
             setLoading(false);
         }
@@ -51,14 +49,14 @@ export const LoginPage = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-zinc-300 ml-1 uppercase tracking-wider">Email</label>
+                        <label className="text-xs font-semibold text-zinc-300 ml-1 uppercase tracking-wider">Username</label>
                         <input
-                            type="email"
+                            type="text"
                             required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
                             className="w-full bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-white placeholder:text-zinc-600 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all shadow-inner"
-                            placeholder="admin@gearguard.com"
+                            placeholder="admin"
                         />
                     </div>
 
